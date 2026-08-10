@@ -18,7 +18,7 @@ function validateFile(file: File): string | null {
 }
 
 export default function UploadModal({ onClose, onUploaded }: UploadModalProps) {
-  const [mode, setMode] = useState<Mode>("file");
+  const [mode, setMode] = useState<Mode>("paste");
   const [file, setFile] = useState<File | null>(null);
   const [pastedName, setPastedName] = useState("");
   const [pastedHtml, setPastedHtml] = useState("");
@@ -120,8 +120,8 @@ export default function UploadModal({ onClose, onUploaded }: UploadModalProps) {
         <div className="mb-4 flex rounded-lg bg-gray-100 p-1">
           {(
             [
-              ["file", "Choose file"],
               ["paste", "Paste HTML"],
+              ["file", "Choose file"],
             ] as const
           ).map(([value, label]) => (
             <button
