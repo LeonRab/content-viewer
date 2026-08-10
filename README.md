@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Content Viewer
 
-## Getting Started
+A public gallery for uploading, browsing, and sharing interactive HTML files.
 
-First, run the development server:
+## Architecture
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Browser → Next.js frontend → Next.js Route Handlers → Vercel Blob
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Vercel Blob is the source of truth** — no database. Files are stored under
+  `content/<timestamp>-<safe-name>.html` and the listing is generated from blob
+  metadata.
+- **IDs are derived from pathnames** (`<timestamp>-<safe-name>`), so
+  `/content/[id]` URLs are stable and shareable.
+- **Uploaded HTML is untrusted** — it is rendered only inside a sandboxed
+  iframe (`sandbox="allow-scripts"`, no `allow-same-origin`), never injected
+  into the React DOM.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key files
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| File | Purpose |
+| --- | --- |
+| `app/page.tsx` | Gallery: list, search, empty/loading/error states |
+| `app/content/[id]/page.tsx` | Viewer: sandboxed iframe, copy link |
+| `app/api/content/route.ts` | `GET` list blobs, `POST` upload with validation |
+| `app/api/content/[id]/route.ts` | `GET` resolve blob + fetch HTML, `DELETE` |
+| `components/UploadModal.tsx` | Upload modal with drag-and-drop + validation |
+| `lib/content.ts` | Shared types, pathname/id/title helpers, limits |
+| `examples/weather-demo.html` | Self-contained sample file for testing |
 
-## Learn More
+## Run locally
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+cp .env.example .env.local   # fill in BLOB_READ_WRITE_TOKEN
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Connect Vercel Blob
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. In the [Vercel dashboard](https://vercel.com/dashboard), open your project →
+   **Storage** → **Create Database** → **Blob**.
+2. Connect the store to the project. Vercel injects `BLOB_READ_WRITE_TOKEN`
+   into deployments automatically.
+3. For local development, copy the token into `.env.local`, or run
+   `vercel env pull .env.local` after `vercel link`.
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm i -g vercel   # if needed
+vercel            # link + preview deploy
+vercel --prod     # production deploy
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Or push the repo to GitHub and import it in the Vercel dashboard — no special
+build configuration is needed. Just make sure a Blob store is connected before
+uploading.
+
+## Testing the flow
+
+Upload `examples/weather-demo.html` via the **+ Upload** button. It renders
+styled weather cards and has a button that proves JavaScript executes inside
+the sandbox.

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Dashboard Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: white;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    .timestamp { opacity: 0.8; font-size: 14px; margin-bottom: 24px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .card .icon { font-size: 40px; }
+    .card .city { font-weight: 600; margin-top: 8px; }
+    .card .temp { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .card .desc { font-size: 13px; opacity: 0.8; }
+    button {
+      margin-top: 28px;
+      background: white;
+      color: #1e3a8a;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    #message { margin-top: 16px; font-size: 16px; font-weight: 500; min-height: 24px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Weather Dashboard Demo</h1>
+    <p class="timestamp">Rendered at: <span id="time"></span></p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">☀️</div>
+        <div class="city">Tel Aviv</div>
+        <div class="temp">31°C</div>
+        <div class="desc">Sunny</div>
+      </div>
+      <div class="card">
+        <div class="icon">🌧️</div>
+        <div class="city">London</div>
+        <div class="temp">17°C</div>
+        <div class="desc">Rainy</div>
+      </div>
+      <div class="card">
+        <div class="icon">⛅</div>
+        <div class="city">New York</div>
+        <div class="temp">24°C</div>
+        <div class="desc">Partly cloudy</div>
+      </div>
+    </div>
+
+    <button id="refresh">Shuffle temperatures</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    document.getElementById("time").textContent = new Date().toLocaleString();
+
+    let clicks = 0;
+    document.getElementById("refresh").addEventListener("click", () => {
+      document.querySelectorAll(".temp").forEach((el) => {
+        el.textContent = Math.floor(Math.random() * 25 + 10) + "°C";
+      });
+      clicks += 1;
+      document.getElementById("message").textContent =
+        "JavaScript works! Shuffled " + clicks + " time" + (clicks === 1 ? "" : "s") + ".";
+    });
+  </script>
+</body>
+</html>
