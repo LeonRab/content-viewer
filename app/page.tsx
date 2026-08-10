@@ -29,6 +29,13 @@ export default function GalleryPage() {
   const [search, setSearch] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   function loadContent() {
     setLoading(true);
@@ -75,8 +82,38 @@ export default function GalleryPage() {
   function handleUploaded(item: ContentItem) {
     setItems((previous) => [item, ...previous]);
     setShowUpload(false);
-    setToast(`Uploaded "${item.title}"`);
-    setTimeout(() => setToast(null), 3000);
+    showToast(`Uploaded "${item.title}"`);
+  }
+
+  async function handleDelete(item: ContentItem) {
+    if (deletingId) return; // one deletion at a time, prevents double-clicks
+    if (!window.confirm(`Delete "${item.title}"? This cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(item.id);
+    try {
+      const response = await fetch(`/api/content/${item.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to delete");
+      }
+      setItems((previous) => previous.filter((i) => i.id !== item.id));
+      showToast(`Deleted "${item.title}"`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleCopyLink(item: ContentItem) {
+    await navigator.clipboard.writeText(
+      `${window.location.origin}/content/${item.id}`
+    );
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId((current) => (current === item.id ? null : current)), 2000);
   }
 
   return (
@@ -165,9 +202,32 @@ export default function GalleryPage() {
                   {formatDate(item.uploadedAt)}
                 </p>
               </div>
-              <span className="mt-4 text-sm font-medium text-blue-600 group-hover:underline">
-                View →
-              </span>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-600 group-hover:underline">
+                  View →
+                </span>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <button
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleCopyLink(item);
+                    }}
+                    className="hover:text-gray-600 hover:underline"
+                  >
+                    {copiedId === item.id ? "Copied!" : "Copy link"}
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleDelete(item);
+                    }}
+                    disabled={deletingId !== null}
+                    className="hover:text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deletingId === item.id ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
